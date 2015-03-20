@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test sign/verify using the WebCrypto API</title>
+  </head>
+  <body>
+    <div>
+      <p><button onclick="testAll()">Test sign/verify</button></p>
+    </div>
+    <p>
+      Signature:
+      <strong id="sig"></strong>
+    </p>
+    <p>
+      Signature verified using the generated (fresh) keys:
+      <strong id="conclusion-private"></strong>
+    </p>
+    <p>
+      Signature verified using the parsed public key:
+      <strong id="conclusion-public"></strong>
+    </p>
+    <p>
+      Private key (PEM):
+      <pre id="pem-private-key"></pre>
+    </p>
+    <p>
+      Public key (PEM):
+      <pre id="pem-public-key"></pre>
+    </p>
+    <script src="webcrypto.js"></script>
+    <script>
+    // Test everything
+    var testAll = function() {
+      var _signedData;
+      var _toSign = "test";
+      
+      $webCrypto.generateRSAKey().then(function(pair) {
+        $webCrypto.exportPemKeys(pair).then(function(keys) {
+          document.querySelector('#pem-private-key').innerHTML = keys.privateKey;
+          document.querySelector('#pem-public-key').innerHTML = keys.publicKey;
+          // Sign
+          $webCrypto.signData(pair.privateKey, _toSign).then(function(signedData) {
+            document.querySelector('#sig').innerHTML = $webCrypto.arraySignatureToBase64(signedData);
+            _signedData = signedData;
+            $webCrypto.verifySig(pair.publicKey, signedData, _toSign).then(function(match) {
+              document.querySelector('#conclusion-private').innerHTML = match;
+              console.log("Signature verified: "+match);
+            });
+          });
+          // load keys and re-check signature
+          $webCrypto.importPublicKey(keys.publicKey).then(function(key) {
+            $webCrypto.verifySig(key, _signedData, _toSign).then(function(match) {
+              document.querySelector('#conclusion-public').innerHTML = match;
+              console.log("Signature verified: "+match);
+            });
+          });
+        });
+      });
+    };
+    </script>
+
+  
+  </body>
+</html>

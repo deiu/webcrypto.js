@@ -1,0 +1,28 @@
+{
+  "name": "webcrypto.js",
+  "version": "1.0.0",
+  "homepage": "https://github.com/deiu/webcrypto.js",
+  "authors": [
+    "Andrei Sambra <andrei@fcns.eu>"
+  ],
+  "description": "Lightweight library to sign and verify signatures using RSA keys and the WebCrypto API",
+  "main": "webcrypto.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "RSA",
+    "cryptographic signatures",
+    "cryptographic signature verification",
+    "WebCrypto",
+    "WebCrypto API"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
