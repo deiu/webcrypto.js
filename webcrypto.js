@@ -27,11 +27,14 @@
       extractable: true,
       publicExponent: new Uint8Array([1, 0, 1])
     };
-    
+
     return new Promise(function(resolve) {
       var genkey = crypto.subtle.generateKey(alg, true, ["sign", "verify"]);
-      genkey.then(function (pair) { 
+      genkey.then(function (pair) {
         resolve(pair);
+      }).catch(function(e) {
+        console.log(e);
+        resolve(null);
       });
     });
   }
@@ -89,7 +92,7 @@
     var encoded = '';
     for(var i = 0;i < lines.length;i++){
       if (lines[i].trim().length > 0 &&
-          lines[i].indexOf('-BEGIN RSA PRIVATE KEY-') < 0 && 
+          lines[i].indexOf('-BEGIN RSA PRIVATE KEY-') < 0 &&
           lines[i].indexOf('-BEGIN RSA PUBLIC KEY-') < 0 &&
           lines[i].indexOf('-END RSA PRIVATE KEY-') < 0 &&
           lines[i].indexOf('-END RSA PUBLIC KEY-') < 0) {
@@ -99,38 +102,65 @@
     return $webCrypto.base64StringToArrayBuffer(encoded);
   };
 
-  $webCrypto.importPublicKey = function(pemKey) {
+  $webCrypto.importPublicKey = function(pemKey, format) {
+    if (!format) {
+      format = 'spki';
+    }
     return new Promise(function(resolve) {
-      var importer = crypto.subtle.importKey("spki", $webCrypto.convertPemToBinary(pemKey), $webCrypto.signAlgorithm, true, ["verify"]);
-      importer.then(function(key) { 
-        resolve(key);
+      var importer = crypto.subtle.importKey(format, $webCrypto.convertPemToBinary(pemKey), $webCrypto.signAlgorithm, true, ["verify"]);
+      importer.then(function(key) {
+        resolve({value: key, error: null});
+      }).catch(function(e) {
+        console.log(e);
+        resolve({value: null, error: e});
       });
     });
   };
 
-  $webCrypto.importPrivateKey = function(pemKey) {
+  $webCrypto.importPrivateKey = function(pemKey, format) {
+    if (!format) {
+      format = 'pkcs8';
+    }
     return new Promise(function(resolve) {
-      var importer = crypto.subtle.importKey("pkcs8", $webCrypto.convertPemToBinary(pemKey), $webCrypto.signAlgorithm, true, ["sign"]);
-      importer.then(function(key) { 
-        resolve(key);
+      var importer = crypto.subtle.importKey(format, $webCrypto.convertPemToBinary(pemKey), $webCrypto.signAlgorithm, false, ["sign"]);
+      importer.then(function(key) {
+        if (!key || key.length === 0) {
+          console.log("Problem parsing key..empty result");
+        }
+        resolve({value: key, error: null});
+      }).catch(function(e) {
+        console.log(e);
+        resolve({value: null, error: e});
       });
     });
   };
 
-  $webCrypto.exportPublicKey = function(keys) {
+  $webCrypto.exportPublicKey = function(keys, format) {
+    if (!format) {
+      format = 'spki';
+    }
     return new Promise(function(resolve) {
-      window.crypto.subtle.exportKey('spki', keys.publicKey).
-      then(function(spki) {
-        resolve($webCrypto.convertBinaryToPem(spki, "RSA PUBLIC KEY"));
+      window.crypto.subtle.exportKey(format, keys.publicKey).
+      then(function(key) {
+        resolve($webCrypto.convertBinaryToPem(key, "RSA PUBLIC KEY"));
+      }).catch(function(e) {
+        console.log(e);
+        resolve(null);
       });
     });
   };
 
-  $webCrypto.exportPrivateKey = function(keys) {
+  $webCrypto.exportPrivateKey = function(keys, format) {
+    if (!format) {
+      format = 'pkcs8';
+    }
     return new Promise(function(resolve) {
-      var expK = window.crypto.subtle.exportKey('pkcs8', keys.privateKey);
-      expK.then(function(pkcs8) {
-        resolve($webCrypto.convertBinaryToPem(pkcs8, "RSA PRIVATE KEY"));
+      var expK = window.crypto.subtle.exportKey(format, keys.privateKey);
+      expK.then(function(key) {
+        resolve($webCrypto.convertBinaryToPem(key, "RSA PRIVATE KEY"));
+      }).catch(function(e) {
+        console.log(e);
+        resolve(null);
       });
     });
   };
@@ -140,14 +170,19 @@
       $webCrypto.exportPublicKey(keys).then(function(pubKey) {
         $webCrypto.exportPrivateKey(keys).then(function(privKey) {
           resolve({publicKey: pubKey, privateKey: privKey});
+        }).catch(function(e) {
+          console.log(e);
+          resolve(null);
         });
+      }).catch(function(e) {
+        console.log(e);
+        resolve(null);
       });
     });
   };
 
   $webCrypto.signData = function(key, data) {
     var buffer = $webCrypto.textToArrayBuffer(data);
-    console.log();
     return window.crypto.subtle.sign($webCrypto.signAlgorithm, key, buffer);
   };
 
