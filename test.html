@@ -34,7 +34,7 @@
     var testAll = function() {
       var _signedData;
       var _toSign = "test";
-      
+
       $webCrypto.generateRSAKey().then(function(pair) {
         $webCrypto.exportPemKeys(pair).then(function(keys) {
           document.querySelector('#pem-private-key').innerHTML = keys.privateKey;
@@ -50,7 +50,7 @@
           });
           // load keys and re-check signature
           $webCrypto.importPublicKey(keys.publicKey).then(function(key) {
-            $webCrypto.verifySig(key, _signedData, _toSign).then(function(match) {
+            $webCrypto.verifySig(key.value, _signedData, _toSign).then(function(match) {
               document.querySelector('#conclusion-public').innerHTML = match;
               console.log("Signature verified: "+match);
             });
@@ -60,6 +60,5 @@
     };
     </script>
 
-  
   </body>
 </html>
